@@ -149,8 +149,8 @@ stage('Publish') {
         // 1. create .npmrc file for publishing
         // 2. add the build ID to any snapshot version for uniqueness
         // 3. publish the build to NPM adding a snapshot tag if pre-release
+        sh 'echo \'//registry.npmjs.org/:_authToken=${NPM_TOKEN}\' > .npmrc'
         sh '''
-          echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
           ${isReleaseVersion ? '' : ('npm version --no-git-tag-version ' + version + '.' + BUILD_ID)}
           npm publish ${isReleaseVersion ? '' : '--tag snapshot'}
         '''
