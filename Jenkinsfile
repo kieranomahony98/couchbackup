@@ -16,7 +16,7 @@
 def getEnvForSuite(suiteName) {
   // Base environment variables
   def envVars = [
-    "COUCH_BACKEND_URL=https://" + env.DB_USER + ":" + env.DB_PASSWORD+"@"+ SDKS_TEST_SERVER_HOST,
+    "COUCH_BACKEND_URL=https://" + env.DB_USER + ":" + env.DB_PASSWORD+ "@" + SDKS_TEST_SERVER_HOST,
     "DBCOMPARE_NAME=DatabaseCompare",
     "DBCOMPARE_VERSION=1.0.1",
     "NVM_DIR=${env.HOME}/.nvm"
@@ -81,12 +81,12 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
               DBCOMPARE_VERSION = env.DBCOMPARE_VERSION
               FILENAME = '$DBCOMPARE_NAME-$DBCOMPARE_VERSION'
               sh '''
-                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"
                 nvm install ${version}
                 nvm use ${version}
                 npm install mocha-jenkins-reporter --save-dev
-                curl -O -u $ARTIFACTORY_USER:$ARTIFACTORY_PW https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/$DBCOMPARE_NAME/$DBCOMPARE_VERSION/$FILENAME.zip
-                unzip $FILENAME.zip
+                curl -O -u ${ARTIFACTORY_USER}:${ARTIFACTORY_PW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${DBCOMPARE_NAME}/${DBCOMPARE_VERSION}/${FILENAME}.zip
+                unzip ${FILENAME}.zip
                 ./node_modules/mocha/bin/mocha --reporter mocha-jenkins-reporter --reporter-options junit_report_path=./test/test-results.xml,junit_report_stack=true,junit_report_name=${testSuite} ${filter} ${testRun}
               '''
             } finally {
