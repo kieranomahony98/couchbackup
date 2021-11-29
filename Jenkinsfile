@@ -16,7 +16,7 @@
 def getEnvForSuite(suiteName) {
   // Base environment variables
   def envVars = [
-    "COUCH_BACKEND_URL=https://${env.DB_USER}:${env.DB_PASSWORD}@${SDKS_TEST_SERVER_HOST}",
+    "COUCH_BACKEND_URL=https://" + env.DB_USER + ":" + env.DB_PASSWORD+"@"+ SDKS_TEST_SERVER_HOST,
     "DBCOMPARE_NAME=DatabaseCompare",
     "DBCOMPARE_VERSION=1.0.1",
     "NVM_DIR=${env.HOME}/.nvm"
@@ -25,7 +25,7 @@ def getEnvForSuite(suiteName) {
   // Add test suite specific environment variables
   switch(suiteName) {
     case 'test':
-      envVars.add("COUCH_URL=https://${env.DB_USER}:${env.DB_PASSWORD}@${SDKS_TEST_SERVER_HOST}")
+      envVars.add("COUCH_URL=https://" + env.DB_USER + ":" + env.DB_PASSWORD + "@" + SDKS_TEST_SERVER_HOST)
       break
     case 'toxytests/toxy':
       envVars.add("COUCH_URL=http://localhost:3000") // proxy
@@ -33,7 +33,7 @@ def getEnvForSuite(suiteName) {
       break
       case 'test-iam':
         envVars.add("COUCH_URL=${SDKS_TEST_SERVER_URL}")
-        envVars.add("COUCHBACKUP_TEST_IAM_API_KEY=${env.IAM_API_KEY}")
+        envVars.add("COUCHBACKUP_TEST_IAM_API_KEY=" + env.IAM_API_KEY)
         envVars.add("CLOUDANT_IAM_TOKEN_URL=${SDKS_TEST_IAM_URL}")
         break
     default:
@@ -75,15 +75,20 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
               //  3. Install mocha-jenkins-reporter so that we can get junit style output
               //  4. Fetch database compare tool for CI tests
               //  5. Run tests using filter
-              sh """
+              ARTIFACTORY_USER = env.ARTIFACTORY_USER
+              ARTIFACTORY_PW = env.ARTIFACTORY_PW
+              DBCOMPARE_NAME = env.DBCOMPARE_NAME
+              DBCOMPARE_VERSION = env.DBCOMPARE_VERSION
+              FILENAME = '$DBCOMPARE_NAME-$DBCOMPARE_VERSION'
+              sh '''
                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                 nvm install ${version}
                 nvm use ${version}
                 npm install mocha-jenkins-reporter --save-dev
-                curl -O -u ${env.ARTIFACTORY_USER}:${env.ARTIFACTORY_PW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
-                unzip ${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
+                curl -O -u $ARTIFACTORY_USER:$ARTIFACTORY_PW https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/$DBCOMPARE_NAME/$DBCOMPARE_VERSION/$FILENAME.zip
+                unzip $FILENAME.zip
                 ./node_modules/mocha/bin/mocha --reporter mocha-jenkins-reporter --reporter-options junit_report_path=./test/test-results.xml,junit_report_stack=true,junit_report_name=${testSuite} ${filter} ${testRun}
-              """
+              '''
             } finally {
               junit '**/*test-results.xml'
             }
@@ -148,11 +153,11 @@ stage('Publish') {
         // 1. create .npmrc file for publishing
         // 2. add the build ID to any snapshot version for uniqueness
         // 3. publish the build to NPM adding a snapshot tag if pre-release
-        sh """
+        sh '''
           echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
           ${isReleaseVersion ? '' : ('npm version --no-git-tag-version ' + version + '.' + env.BUILD_ID)}
           npm publish ${isReleaseVersion ? '' : '--tag snapshot'}
-        """
+        '''
       }
     }
   }
