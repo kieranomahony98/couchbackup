@@ -60,15 +60,9 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
         """
       } else {
         // Run tests using creds
-        withCredentials([
-                usernamePassword(credentialsId: 'testServerLegacy',
-                        usernameVariable: 'DB_USER',
-                        passwordVariable: 'DB_PASSWORD'),
-                usernamePassword(credentialsId: 'artifactory',
-                        usernameVariable: 'ARTIFACTORY_USER',
-                        passwordVariable: 'ARTIFACTORY_PW'),
-                string(credentialsId: 'testServerIamApiKey',
-                        variable: 'IAM_API_KEY')]) {
+        withCredentials([usernamePassword(credentialsId: 'testServerLegacy', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD'),
+                          usernamePassword(credentialsId: 'artifactory', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PW'),
+                          string(credentialsId: 'testServerIamApiKey', variable: 'IAM_API_KEY')]) {
           withEnv(getEnvForSuite("${testSuite}")) {
             try {
               // For the IAM tests we want to run the normal 'test' suite, but we
@@ -81,16 +75,15 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
               //  3. Install mocha-jenkins-reporter so that we can get junit style output
               //  4. Fetch database compare tool for CI tests
               //  5. Run tests using filter
-              FILENAME = '$DBCOMPARE_NAME-$DBCOMPARE_VERSION'
-              sh '''
-                [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"
+              sh """
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                 nvm install ${version}
                 nvm use ${version}
                 npm install mocha-jenkins-reporter --save-dev
-                curl -O -u ${ARTIFACTORY_USER}:${ARTIFACTORY_PW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${DBCOMPARE_NAME}/${DBCOMPARE_VERSION}/${FILENAME}.zip
-                unzip ${FILENAME}.zip
+                curl -O -u ${env.ARTIFACTORY_USER}:${env.ARTIFACTORY_PW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
+                unzip ${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
                 ./node_modules/mocha/bin/mocha --reporter mocha-jenkins-reporter --reporter-options junit_report_path=./test/test-results.xml,junit_report_stack=true,junit_report_name=${testSuite} ${filter} ${testRun}
-              '''
+              """
             } finally {
               junit '**/*test-results.xml'
             }
@@ -155,11 +148,11 @@ stage('Publish') {
         // 1. create .npmrc file for publishing
         // 2. add the build ID to any snapshot version for uniqueness
         // 3. publish the build to NPM adding a snapshot tag if pre-release
-        sh "echo '//registry.npmjs.org/:_authToken=\\\${NPM_TOKEN}' > .npmrc"
-        sh '''
-          ${isReleaseVersion ? '' : ('npm version --no-git-tag-version ' + version + '.' + BUILD_ID)}
+        sh """
+          echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
+          ${isReleaseVersion ? '' : ('npm version --no-git-tag-version ' + version + '.' + env.BUILD_ID)}
           npm publish ${isReleaseVersion ? '' : '--tag snapshot'}
-        '''
+        """
       }
     }
   }
