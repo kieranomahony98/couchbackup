@@ -60,9 +60,19 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
         """
       } else {
         // Run tests using creds
-        withCredentials([usernamePassword(credentialsId: 'testServerLegacy', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD'),
-                          usernamePassword(credentialsId: 'artifactory', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PW'),
-                          string(credentialsId: 'testServerIamApiKey', variable: 'IAM_API_KEY')]) {
+        withCredentials([
+                usernamePassword(credentialsId: 'testServerLegacy',
+                        usernameVariable: 'DB_USER',
+                        passwordVariable: 'DB_PASSWORD'),
+                usernamePassword(credentialsId: 'artifactory',
+                        usernameVariable: 'ARTIFACTORY_USER',
+                        passwordVariable: 'ARTIFACTORY_PW'),
+                string(credentialsId: 'testServerIamApiKey',
+                        variable: 'IAM_API_KEY'),
+                string(credentialsId: 'dbCompareName',
+                        variable: 'DBCOMPARE_NAME'),
+                string(credentialsId: 'dbCompareVersion',
+                        variable: 'DBCOMPARE_VERSION')]) {
           withEnv(getEnvForSuite("${testSuite}")) {
             try {
               // For the IAM tests we want to run the normal 'test' suite, but we
@@ -149,7 +159,7 @@ stage('Publish') {
         // 1. create .npmrc file for publishing
         // 2. add the build ID to any snapshot version for uniqueness
         // 3. publish the build to NPM adding a snapshot tag if pre-release
-        sh 'echo \'//registry.npmjs.org/:_authToken=${NPM_TOKEN}\' > .npmrc'
+        sh "echo '//registry.npmjs.org/:_authToken=\\\${NPM_TOKEN}' > .npmrc"
         sh '''
           ${isReleaseVersion ? '' : ('npm version --no-git-tag-version ' + version + '.' + BUILD_ID)}
           npm publish ${isReleaseVersion ? '' : '--tag snapshot'}
