@@ -68,11 +68,7 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
                         usernameVariable: 'ARTIFACTORY_USER',
                         passwordVariable: 'ARTIFACTORY_PW'),
                 string(credentialsId: 'testServerIamApiKey',
-                        variable: 'IAM_API_KEY'),
-                string(credentialsId: 'dbCompareName',
-                        variable: 'DBCOMPARE_NAME'),
-                string(credentialsId: 'dbCompareVersion',
-                        variable: 'DBCOMPARE_VERSION')]) {
+                        variable: 'IAM_API_KEY')]) {
           withEnv(getEnvForSuite("${testSuite}")) {
             try {
               // For the IAM tests we want to run the normal 'test' suite, but we
