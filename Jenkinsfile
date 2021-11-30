@@ -80,7 +80,7 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
                 nvm install ${version}
                 nvm use ${version}
                 npm install mocha-jenkins-reporter --save-dev
-                curl -O -u ${env.ARTIFACTORY_USER}:${env.ARTIFACTORY_PW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
+                curl -O -u ${ARTIFACTORY_CREDS_USR}:${ARTIFACTORY_CREDS_PSW} https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
                 unzip ${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
                 ./node_modules/mocha/bin/mocha --reporter mocha-jenkins-reporter --reporter-options junit_report_path=./test/test-results.xml,junit_report_stack=true,junit_report_name=${testSuite} ${filter} ${testRun}
               """
@@ -104,6 +104,9 @@ stage('Build') {
 }
 
 stage('QA') {
+  environment{
+    ARTIFACTORY_CREDS = credentials('artifactory')
+  }
   // Allow a supplied a test filter, but provide a reasonable default.
   String filter;
   if (env.TEST_FILTER == null) {
