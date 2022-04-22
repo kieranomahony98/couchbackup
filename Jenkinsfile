@@ -63,10 +63,7 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
               // For the IAM tests we want to run the normal 'test' suite, but we
               // want to keep the report named 'test-iam'
               def testRun = (testSuite != 'test-iam') ? testSuite : 'test'
-
-              environment {
-                 DB_PASSWORD_ENC = java.net.URLEncoder.encode(DB_PASSWORD, "UTF-8")
-               }
+              def dbPassword = java.net.URLEncoder.encode(DB_PASSWORD, "UTF-8")
 
               // Actions:
               //  1. Load NVM
@@ -74,17 +71,17 @@ def setupNodeAndTest(version, filter='', testSuite='test') {
               //  3. Install mocha-jenkins-reporter so that we can get junit style output
               //  4. Fetch database compare tool for CI tests
               //  5. Run tests using filter
-              sh """
+              sh '''
                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                 nvm install ${version}
                 nvm use ${version}
                 npm install mocha-jenkins-reporter --save-dev
-                curl -O -u "\${ARTIFACTORY_USER}:\${ARTIFACTORY_PW}" "https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip"
+                curl -O -u '$ARTIFACTORY_USER:$ARTIFACTORY_PW' "https://na.artifactory.swg-devops.com/artifactory/cloudant-sdks-maven-local/com/ibm/cloudant/${env.DBCOMPARE_NAME}/${env.DBCOMPARE_VERSION}/${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip"
                 unzip ${env.DBCOMPARE_NAME}-${env.DBCOMPARE_VERSION}.zip
-                export COUCH_BACKEND_URL='https://$DB_USER:$DB_PASSWORD_ENC@$SDKS_TEST_SERVER_HOST'
+                export COUCH_BACKEND_URL='https://$DB_USER:$dbPassword@$SDKS_TEST_SERVER_HOST'
                 export COUCH_URL="${(testSuite == 'toxytests/toxy') ? 'http://localhost:3000' : ((testSuite == 'test-iam') ? '${SDKS_TEST_SERVER_URL}' : '${COUCH_BACKEND_URL}')}"
                 ./node_modules/mocha/bin/mocha --reporter mocha-jenkins-reporter --reporter-options junit_report_path=./test/test-results.xml,junit_report_stack=true,junit_report_name=${testSuite} ${filter} ${testRun}
-              """
+              '''
             } finally {
               junit '**/*test-results.xml'
             }
