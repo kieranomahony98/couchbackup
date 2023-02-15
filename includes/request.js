@@ -138,7 +138,7 @@ module.exports = {
       backoffType: 'exponential',
       httpMethodsToRetry: ['GET', 'HEAD', 'POST'],
       statusCodesToRetry: [
-        [429, 429],
+        [429, 429, 401],
         [500, 599]
       ],
       shouldRetry: err => {
